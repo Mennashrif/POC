@@ -12,10 +12,10 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
     
     public GuestDetails Guest { get; private set; }
     
-    private readonly IList<RoomRequest> _roomRequests = new();
+    private readonly List<RoomRequest> _roomRequests = new();
     public IReadOnlyCollection<RoomRequest> RoomRequests => _roomRequests.AsReadOnly();
     
-    private readonly IList<string> _assignedPhysicalRoomIds = new();
+    private readonly List<string> _assignedPhysicalRoomIds = new();
     public IReadOnlyCollection<string> AssignedPhysicalRoomIds => _assignedPhysicalRoomIds.AsReadOnly();
 
     private Reservation() : base(Guid.Empty) { } 
