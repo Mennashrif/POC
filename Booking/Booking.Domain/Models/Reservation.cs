@@ -12,13 +12,13 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
     
     public GuestDetails Guest { get; private set; }
     
-    private readonly List<RoomRequest> _roomRequests = new();
+    private readonly IList<RoomRequest> _roomRequests = new();
     public IReadOnlyCollection<RoomRequest> RoomRequests => _roomRequests.AsReadOnly();
     
-    private readonly List<string> _assignedPhysicalRoomIds = new();
+    private readonly IList<string> _assignedPhysicalRoomIds = new();
     public IReadOnlyCollection<string> AssignedPhysicalRoomIds => _assignedPhysicalRoomIds.AsReadOnly();
 
-    private Reservation() : base(Guid.Empty) { } // Required by EF Core for materialization
+    private Reservation() : base(Guid.Empty) { } 
 
     public Reservation(GuestDetails guest, StayDate stayDate, IEnumerable<RoomRequest> roomRequests) : base(Guid.NewGuid())
     {

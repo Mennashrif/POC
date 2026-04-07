@@ -2,13 +2,11 @@ using System;
 
 namespace Booking.Domain.Models;
 
-// This is a Value Object (V)
 public record StayDate
 {
     public DateTime CheckIn { get; init; }
     public DateTime CheckOut { get; init; }
 
-    // Computed property indicating how many nights they will stay
     public int TotalNights => (CheckOut.Date - CheckIn.Date).Days;
 
     public StayDate(DateTime checkIn, DateTime checkOut)

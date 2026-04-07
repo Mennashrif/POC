@@ -9,7 +9,7 @@ namespace Booking.Infrastructure.Messaging;
 
 public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
 {
-    private readonly RabbitMqOptions _options;
+    private readonly IOptions<RabbitMqOptions> _options;
     private IConnection? _connection;
     private IChannel? _channel;
 
