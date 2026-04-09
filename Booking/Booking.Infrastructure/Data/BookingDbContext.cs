@@ -11,6 +11,7 @@ public class BookingDbContext : DbContext
 
     // This specifically registers the Reservation Aggregate Root so EF Core maps it!
     public DbSet<Reservation> Reservations { get; set; }
+    public DbSet<Transaction> Transactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

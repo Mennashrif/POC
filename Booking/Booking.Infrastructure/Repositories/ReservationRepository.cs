@@ -1,11 +1,11 @@
 using Booking.Application.Abstractions;
-using Booking.Infrastructure.Messaging;
-
 using Booking.Application.DTOs;
 using Booking.Domain.Abstractions;
 using Booking.Domain.Models;
 using Booking.Infrastructure.Data;
+using Booking.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
+using System.Transactions;
 
 namespace Booking.Infrastructure.Repositories;
 
@@ -33,11 +33,26 @@ public class ReservationRepository : IReservationRepository
             .ToListAsync();
     }
 
+    public async Task<List<ReservationDto>> GetAllAsync()
+    {
+        return await _dbContext.Reservations
+            .AsNoTracking()
+            .Select(r => new ReservationDto(
+                r.Id,
+                r.Status.ToString(),
+                r.StayDate.CheckIn,
+                r.StayDate.CheckOut,
+                r.Guest.Name,
+                r.RoomRequests.Sum(req => req.Quantity)
+            ))
+            .ToListAsync();
+    }
+
     public async Task<ReservationDto?> GetDetailsByIdAsync(Guid id)
     {
         return await _dbContext.Reservations
             .AsNoTracking()
-            .Where(r => r.Id == id)
+            //.Where(r => r.Id == id)
             .Select(r => new ReservationDto(
                 r.Id,
                 r.Status.ToString(),
