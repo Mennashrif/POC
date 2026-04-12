@@ -11,6 +11,7 @@ namespace Booking.Application.Abstractions;
 public interface IReservationRepository
 {
     Task<Reservation?> GetByIdAsync(Guid id);
+    Task<List<ReservationDto>> GetAllAsync();
     Task<List<Reservation>> GetOverlappingAsync(StayDate dates);
     Task<ReservationDto?> GetDetailsByIdAsync(Guid id);
     Task AddAsync(Reservation reservation);
