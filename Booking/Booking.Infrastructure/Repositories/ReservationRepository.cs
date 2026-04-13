@@ -69,6 +69,11 @@ public class ReservationRepository : IReservationRepository
         await _dbContext.Reservations.AddAsync(reservation);
     }
 
+    public void Update(Reservation reservation)
+    { 
+        _dbContext.Reservations.Update(reservation);
+    }
+
     public async Task SaveChangesAsync()
     {
         var domainEntities = _dbContext.ChangeTracker

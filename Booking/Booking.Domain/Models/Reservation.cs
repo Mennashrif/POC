@@ -17,8 +17,7 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
     
     private readonly List<string> _assignedPhysicalRoomIds = new();
     public IReadOnlyCollection<string> AssignedPhysicalRoomIds => _assignedPhysicalRoomIds.AsReadOnly();
-
-    private Reservation() : base(Guid.Empty) { } 
+    public byte[] RowVersion { get; set; }
 
     public Reservation(GuestDetails guest, StayDate stayDate, IEnumerable<RoomRequest> roomRequests) : base(Guid.NewGuid())
     {
@@ -72,11 +71,20 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
         Status = ReservationStatus.CheckedOut;
    }
 
+   public void Update(GuestDetails guest, StayDate stayDate)
+   {
+        if (Status != ReservationStatus.Pending && Status != ReservationStatus.Confirmed)
+            throw new InvalidOperationException("Only Pending or Confirmed reservations can be updated.");
+
+        Guest = guest ?? throw new ArgumentNullException(nameof(guest));
+        StayDate = stayDate;
+   }
+
    public void Cancel()
    {
         if(Status != ReservationStatus.Pending && Status != ReservationStatus.Confirmed)
             throw new InvalidOperationException("Reservation is not in Pending or Confirmed state");
-            
+
         Status = ReservationStatus.Cancelled;
    }
 }

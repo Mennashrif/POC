@@ -20,6 +20,8 @@ public class BookingDbContext : DbContext
         modelBuilder.Entity<Reservation>(entity =>
         {
             entity.HasKey(r => r.Id);
+            entity.Property(r => r.RowVersion)
+            .IsRowVersion();
 
             entity.OwnsOne(r => r.StayDate);
 
@@ -36,5 +38,6 @@ public class BookingDbContext : DbContext
 
             entity.Ignore(r => r.DomainEvents);
         });
+        
     }
 }

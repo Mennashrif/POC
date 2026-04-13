@@ -18,6 +18,7 @@ public interface IReservationService
         DateTime checkOut,
         List<RoomRequest> roomRequests);
 
+    Task<Result<bool>> UpdateAsync(Guid reservationId, GuestDetails guest, DateTime checkIn, DateTime checkOut);
     Task<Result<bool>> CheckInAsync(Guid reservationId, List<string> physicalRoomIds);
 
     // Read side: returns a flat DTO — never a domain object.

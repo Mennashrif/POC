@@ -15,5 +15,6 @@ public interface IReservationRepository
     Task<List<Reservation>> GetOverlappingAsync(StayDate dates);
     Task<ReservationDto?> GetDetailsByIdAsync(Guid id);
     Task AddAsync(Reservation reservation);
+    void Update(Reservation reservation);
     Task SaveChangesAsync();
 }

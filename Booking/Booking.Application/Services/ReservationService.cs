@@ -10,7 +10,6 @@ public class ReservationService : IReservationService
 {
     private readonly IReservationRepository _repository;
     private readonly ITransactionRepository _transactionRepository ;
-
     private const int HotelCapacityPerRoomType = 10;
 
     public ReservationService(IReservationRepository repository, ITransactionRepository transactionRepository)
@@ -54,11 +53,11 @@ public class ReservationService : IReservationService
         //      Inner waits for outer to commit → outer waits for inner to finish → DEADLOCK.
         var Outeroptions = new TransactionOptions
         {
-            IsolationLevel = IsolationLevel.Serializable
+            IsolationLevel = IsolationLevel.ReadUncommitted,
         };
         var Ineroptions = new TransactionOptions
         {
-            IsolationLevel = IsolationLevel.Serializable
+            IsolationLevel = IsolationLevel.ReadUncommitted
         };
 
 
@@ -408,6 +407,21 @@ public class ReservationService : IReservationService
         scope.Complete();
 
         return Result<Guid>.Success(reservation.Id);
+    }
+
+    public async Task<Result<bool>> UpdateAsync(Guid reservationId, GuestDetails guest, DateTime checkIn, DateTime checkOut)
+    {
+        var reservation = await _repository.GetByIdAsync(reservationId);
+        if (reservation is null)
+            return Result<bool>.Failure($"Reservation {reservationId} not found.");
+
+        var stayDate = new StayDate(checkIn, checkOut);
+        reservation.Update(guest, stayDate);
+
+        _repository.Update(reservation);
+        await _repository.SaveChangesAsync();
+
+        return Result<bool>.Success(true);
     }
 
     public async Task<Result<bool>> CheckInAsync(Guid reservationId, List<string> physicalRoomIds)
