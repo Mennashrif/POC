@@ -38,6 +38,23 @@ public static class ReservationEndpoints
         })
         .WithName("GetReservationById");
 
+        app.MapPut("/reservations/{id:guid}", async (Guid id, UpdateReservationRequest request, IMediator mediator) =>
+        {
+            var command = new UpdateReservationCommand(
+                id,
+                new GuestDetails(request.Guest.Name, request.Guest.Email, request.Guest.Phone),
+                request.CheckIn,
+                request.CheckOut
+            );
+
+            var result = await mediator.Send(command);
+
+            return result.IsSuccess
+                ? Results.Ok()
+                : Results.BadRequest(new { error = result.Error });
+        })
+        .WithName("UpdateReservation");
+
         app.MapPut("/reservations/{id:guid}/checkin", async (Guid id, CheckInRequest request, IMediator mediator) =>
         {
             var command = new CheckInReservationCommand(id, request.PhysicalRoomIds);
@@ -67,3 +84,9 @@ record GuestRequest(string Name, string Email, string Phone);
 record RoomRequestDto(RoomTypeEnum RoomType, int Quantity = 1);
 
 record CheckInRequest(List<string> PhysicalRoomIds);
+
+record UpdateReservationRequest(
+    GuestRequest Guest,
+    DateTime CheckIn,
+    DateTime CheckOut
+);
