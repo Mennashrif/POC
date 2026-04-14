@@ -5,5 +5,5 @@ namespace Booking.Infrastructure.Messaging;
 
 public interface IEventPublisher
 {
-    Task PublishAsync<T>(T domainEvent, CancellationToken cancellationToken = default);
+    Task PublishAsync(string eventType, string payload, CancellationToken cancellationToken = default);
 }

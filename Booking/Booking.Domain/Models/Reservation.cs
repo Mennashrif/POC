@@ -18,7 +18,7 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
     private readonly List<string> _assignedPhysicalRoomIds = new();
     public IReadOnlyCollection<string> AssignedPhysicalRoomIds => _assignedPhysicalRoomIds.AsReadOnly();
     public byte[] RowVersion { get; set; }
-
+    public Reservation() : base(Guid.NewGuid()) { }
     public Reservation(GuestDetails guest, StayDate stayDate, IEnumerable<RoomRequest> roomRequests) : base(Guid.NewGuid())
     {
         Guest = guest ?? throw new ArgumentNullException(nameof(guest));
@@ -34,13 +34,6 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
 
         Status = ReservationStatus.Confirmed;
 
-        AddDomainEvent(new ReservationConfirmedEvent(
-            Id,
-            StayDate.CheckIn,
-            StayDate.CheckOut,
-            Guest.Name,
-            DateTime.UtcNow
-        ));
    }
 
    public void CheckIn(List<string> physicalRoomIds)
@@ -54,13 +47,6 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
         Status = ReservationStatus.CheckedIn;
         _assignedPhysicalRoomIds.AddRange(physicalRoomIds);
 
-        AddDomainEvent(new ReservationCheckedInEvent(
-            Id,
-            physicalRoomIds,
-            Guest.Name,
-            DateTime.UtcNow,
-            DateTime.UtcNow
-        ));
    }
 
    public void CheckOut()
