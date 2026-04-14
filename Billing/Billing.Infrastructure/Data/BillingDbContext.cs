@@ -10,6 +10,7 @@ public class BillingDbContext : DbContext
     }
 
     public DbSet<Bill> Bills { get; set; }
+    public DbSet<ProcessedEvent> ProcessedEvents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,6 +25,15 @@ public class BillingDbContext : DbContext
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
 
             entity.Ignore(b => b.DomainEvents);
+        });
+
+        modelBuilder.Entity<ProcessedEvent>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.HasIndex(p => new { p.ReservationId, p.EventType }).IsUnique();
+            entity.Property(p => p.EventType).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.ProcessedAt).IsRequired();
+            entity.Ignore(p => p.DomainEvents);
         });
     }
 }

@@ -1,23 +1,18 @@
 using Booking.Application.Abstractions;
 using Booking.Application.DTOs;
-using Booking.Domain.Abstractions;
 using Booking.Domain.Models;
 using Booking.Infrastructure.Data;
-using Booking.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
-using System.Transactions;
 
 namespace Booking.Infrastructure.Repositories;
 
 public class ReservationRepository : IReservationRepository
 {
     private readonly BookingDbContext _dbContext;
-    private readonly IEventPublisher _eventPublisher;
 
-    public ReservationRepository(BookingDbContext dbContext, IEventPublisher eventPublisher)
+    public ReservationRepository(BookingDbContext dbContext)
     {
         _dbContext = dbContext;
-        _eventPublisher = eventPublisher;
     }
 
     public async Task<Reservation?> GetByIdAsync(Guid id)
@@ -76,21 +71,8 @@ public class ReservationRepository : IReservationRepository
 
     public async Task SaveChangesAsync()
     {
-        var domainEntities = _dbContext.ChangeTracker
-            .Entries<BaseEntity<Guid>>()
-            .Where(e => e.Entity.DomainEvents.Any())
-            .ToList();
-
-        var domainEvents = domainEntities
-            .SelectMany(e => e.Entity.DomainEvents)
-            .ToList();
-
+        
         await _dbContext.SaveChangesAsync();
 
-        foreach (var domainEvent in domainEvents)
-            await _eventPublisher.PublishAsync(domainEvent);
-
-        foreach (var entry in domainEntities)
-            entry.Entity.ClearDomainEvents();
     }
 }

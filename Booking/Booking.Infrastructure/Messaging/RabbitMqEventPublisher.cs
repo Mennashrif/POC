@@ -35,16 +35,15 @@ public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
         _channel = await _connection.CreateChannelAsync();
     }
 
-    public async Task PublishAsync<T>(T domainEvent, CancellationToken cancellationToken = default)
+    public async Task PublishAsync(string eventType, string payload, CancellationToken cancellationToken = default)
     {
         await EnsureConnectedAsync();
 
-        var routingKey = domainEvent?.GetType().Name ?? typeof(T).Name; // e.g. "ReservationConfirmedEvent"
-        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(domainEvent));
+        var body = Encoding.UTF8.GetBytes(payload);
 
         await _channel!.BasicPublishAsync(
             exchange: _options.ExchangeName,
-            routingKey: routingKey,
+            routingKey: eventType,
             body: body,
             cancellationToken: cancellationToken);
     }

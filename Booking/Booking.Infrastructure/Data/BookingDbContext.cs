@@ -36,8 +36,15 @@ public class BookingDbContext : DbContext
                 .HasField("_assignedPhysicalRoomIds")
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-            entity.Ignore(r => r.DomainEvents);
         });
-        
+
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.EventType).IsRequired().HasMaxLength(200);
+            entity.Property(t => t.Payload).IsRequired();
+            entity.Property(t => t.OccurredAt).IsRequired();
+            entity.Property(t => t.PublishedAt).IsRequired(false);
+        });
     }
 }

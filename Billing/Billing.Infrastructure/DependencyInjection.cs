@@ -2,6 +2,7 @@ using Billing.Application.Abstractions;
 using Billing.Infrastructure.Data;
 using Billing.Infrastructure.Messaging;
 using Billing.Infrastructure.Repositories;
+using Billing.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,9 +14,10 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<BillingDbContext>(options =>
-            options.UseInMemoryDatabase("BillingDb"));
+            options.UseSqlServer(configuration.GetConnectionString("BillingDb")));
 
         services.AddScoped<IBillRepository, BillRepository>();
+        services.AddScoped<IProcessedEventRepository, ProcessedEventRepository>();
 
         services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMQ"));
         services.AddHostedService<ReservationCheckedInConsumer>();
