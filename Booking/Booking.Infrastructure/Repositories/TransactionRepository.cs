@@ -37,9 +37,5 @@ namespace Booking.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task SaveChangesAsync()
-        {
-            await _dbContext.SaveChangesAsync();
-        }
     }
 }

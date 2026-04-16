@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Transactions;
 using Billing.Application.Abstractions;
 using Billing.Application.DTOs;
 using Billing.Domain.Abstractions;
@@ -13,11 +12,16 @@ public class BillingService : IBillingService
 {
     private readonly IBillRepository _repository;
     private readonly IProcessedEventRepository _processedEventRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public BillingService(IBillRepository repository, IProcessedEventRepository processedEventRepository)
+    public BillingService(
+        IBillRepository repository,
+        IProcessedEventRepository processedEventRepository,
+        IUnitOfWork unitOfWork)
     {
         _repository = repository;
         _processedEventRepository = processedEventRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<Guid>> CreateBillAsync(
@@ -26,25 +30,38 @@ public class BillingService : IBillingService
         List<string> physicalRoomIds,
         DateTime checkInDate)
     {
-        // Idempotency check — if this event was already processed, skip it
         var alreadyProcessed = await _processedEventRepository.ExistsAsync(reservationId, "ReservationCheckedInEvent");
         if (alreadyProcessed)
-            return Result<Guid>.Success(Guid.Empty); // already handled, not an error
+            return Result<Guid>.Success(Guid.Empty);
 
         var bill = new Bill(reservationId, guestName, physicalRoomIds, checkInDate);
         var processedEvent = new ProcessedEvent(reservationId, "ReservationCheckedInEvent");
 
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-
         await _repository.AddAsync(bill);
-        await _repository.SaveChangesAsync();
-
         await _processedEventRepository.AddAsync(processedEvent);
-        await _processedEventRepository.SaveChangesAsync();
 
-        scope.Complete();
+        await _unitOfWork.SaveChangesAsync();
 
         return Result<Guid>.Success(bill.Id);
+    }
+
+    public async Task<Result<bool>> CancelBillAsync(Guid reservationId)
+    {
+        var alreadyProcessed = await _processedEventRepository.ExistsAsync(reservationId, "CheckInRevertedEvent");
+        if (alreadyProcessed)
+            return Result<bool>.Success(true);
+
+        var bill = await _repository.FindByReservationIdAsync(reservationId);
+        if (bill is null)
+            return Result<bool>.Failure($"No bill found for reservation {reservationId}.");
+
+        bill.Cancel();
+
+        await _processedEventRepository.AddAsync(new ProcessedEvent(reservationId, "CheckInRevertedEvent"));
+
+        await _unitOfWork.SaveChangesAsync();
+
+        return Result<bool>.Success(true);
     }
 
     public async Task<BillDto?> GetByIdAsync(Guid id)

@@ -59,20 +59,9 @@ public class ReservationRepository : IReservationRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task AddAsync(Reservation reservation)
+    public void Add(Reservation reservation)
     {
-        await _dbContext.Reservations.AddAsync(reservation);
+        _dbContext.Reservations.Add(reservation);
     }
 
-    public void Update(Reservation reservation)
-    { 
-        _dbContext.Reservations.Update(reservation);
-    }
-
-    public async Task SaveChangesAsync()
-    {
-        
-        await _dbContext.SaveChangesAsync();
-
-    }
 }

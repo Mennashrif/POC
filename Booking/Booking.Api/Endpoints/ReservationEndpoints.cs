@@ -16,7 +16,7 @@ public static class ReservationEndpoints
                 new GuestDetails(request.Guest.Name, request.Guest.Email, request.Guest.Phone),
                 request.CheckIn,
                 request.CheckOut,
-                request.RoomRequests.Select(r => new RoomRequest(r.RoomType, r.Quantity)).ToList()
+                request.RoomRequests.Select(r => new RoomRequest(r.RoomTypeId, r.Quantity)).ToList()
             );
 
             var result = await mediator.Send(command);
@@ -37,23 +37,6 @@ public static class ReservationEndpoints
                 : Results.NotFound(new { error = $"Reservation {id} not found." });
         })
         .WithName("GetReservationById");
-
-        app.MapPut("/reservations/{id:guid}", async (Guid id, UpdateReservationRequest request, IMediator mediator) =>
-        {
-            var command = new UpdateReservationCommand(
-                id,
-                new GuestDetails(request.Guest.Name, request.Guest.Email, request.Guest.Phone),
-                request.CheckIn,
-                request.CheckOut
-            );
-
-            var result = await mediator.Send(command);
-
-            return result.IsSuccess
-                ? Results.Ok()
-                : Results.BadRequest(new { error = result.Error });
-        })
-        .WithName("UpdateReservation");
 
         app.MapPut("/reservations/{id:guid}/checkin", async (Guid id, CheckInRequest request, IMediator mediator) =>
         {
@@ -81,12 +64,7 @@ record CreateReservationRequest(
 
 record GuestRequest(string Name, string Email, string Phone);
 
-record RoomRequestDto(RoomTypeEnum RoomType, int Quantity = 1);
+record RoomRequestDto(Guid RoomTypeId, int Quantity = 1);
 
 record CheckInRequest(List<string> PhysicalRoomIds);
 
-record UpdateReservationRequest(
-    GuestRequest Guest,
-    DateTime CheckIn,
-    DateTime CheckOut
-);

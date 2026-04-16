@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddDbContext<BillingDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("BillingDb")));
 
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IBillRepository, BillRepository>();
         services.AddScoped<IProcessedEventRepository, ProcessedEventRepository>();
 

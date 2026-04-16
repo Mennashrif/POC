@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="RoomManagement.API/RoomManagement.API.csproj" />
+  <Project Path="RoomManagement.Application/RoomManagement.Application.csproj" />
+  <Project Path="RoomManagement.Domain/RoomManagement.Domain.csproj" />
+  <Project Path="RoomManagement.Infrastructure/RoomManagement.Infrastructure.csproj" />
+</Solution>
