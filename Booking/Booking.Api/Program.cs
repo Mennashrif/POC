@@ -41,7 +41,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHangfireDashboard("/hangfire");
 app.MapReservationEndpoints();
-app.MapPaymentEndpoints();
 app.UseHttpsRedirection();
 
 RecurringJob.AddOrUpdate<OutboxProcessorJob>(

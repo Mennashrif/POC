@@ -25,8 +25,4 @@ public class ProcessedEventRepository : IProcessedEventRepository
         await _dbContext.ProcessedEvents.AddAsync(processedEvent);
     }
 
-    public async Task SaveChangesAsync()
-    {
-        await _dbContext.SaveChangesAsync();
-    }
 }

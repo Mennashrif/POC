@@ -1,6 +1,6 @@
 namespace Booking.Domain.Models;
 
-public enum ReservationStatus
+public enum ReservationStatus :byte
 {
     Pending,
     Confirmed,
@@ -9,9 +9,3 @@ public enum ReservationStatus
     Cancelled
 }
 
-public enum RoomTypeEnum
-{
-    Single,
-    Double,
-    Suite
-}

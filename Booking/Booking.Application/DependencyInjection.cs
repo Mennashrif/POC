@@ -13,6 +13,7 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(typeof(CreateReservationCommandHandler).Assembly));
 
         services.AddScoped<IReservationService, ReservationService>();
+        services.AddScoped<ILocalRoomService, LocalRoomService>();
 
         return services;
     }

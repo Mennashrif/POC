@@ -10,6 +10,6 @@ public interface IBillRepository
     Task<Bill?> GetByIdAsync(Guid id);
     Task<BillDto?> GetDetailsByIdAsync(Guid id);
     Task<BillDto?> GetByReservationIdAsync(Guid reservationId);
+    Task<Bill?> FindByReservationIdAsync(Guid reservationId);
     Task AddAsync(Bill bill);
-    Task SaveChangesAsync();
 }

@@ -60,8 +60,8 @@ public class BillRepository : IBillRepository
         await _dbContext.Bills.AddAsync(bill);
     }
 
-    public async Task SaveChangesAsync()
+    public Task<Bill?> FindByReservationIdAsync(Guid reservationId)
     {
-        await _dbContext.SaveChangesAsync();
+        return _dbContext.Bills.FirstOrDefaultAsync(b => b.ReservationId == reservationId);
     }
 }

@@ -73,4 +73,13 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
 
         Status = ReservationStatus.Cancelled;
    }
+
+   public void RevertCheckIn()
+   {
+        if (Status != ReservationStatus.CheckedIn)
+            throw new InvalidOperationException("Only a CheckedIn reservation can have its check-in reverted.");
+
+        Status = ReservationStatus.Confirmed;
+        _assignedPhysicalRoomIds.Clear();
+   }
 }

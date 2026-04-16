@@ -22,6 +22,30 @@ namespace Booking.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Booking.Domain.Models.LocalRoom", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RoomNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("RoomTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LocalRooms");
+                });
+
             modelBuilder.Entity("Booking.Domain.Models.Reservation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -113,8 +137,8 @@ namespace Booking.Infrastructure.Migrations
                             b1.Property<int>("Quantity")
                                 .HasColumnType("int");
 
-                            b1.Property<int>("RoomType")
-                                .HasColumnType("int");
+                            b1.Property<Guid>("RoomTypeId")
+                                .HasColumnType("uniqueidentifier");
 
                             b1.HasKey("ReservationId", "Id");
 

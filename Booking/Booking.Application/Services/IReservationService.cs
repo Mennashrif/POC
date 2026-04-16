@@ -18,8 +18,13 @@ public interface IReservationService
         DateTime checkOut,
         List<RoomRequest> roomRequests);
 
-    Task<Result<bool>> UpdateAsync(Guid reservationId, GuestDetails guest, DateTime checkIn, DateTime checkOut);
     Task<Result<bool>> CheckInAsync(Guid reservationId, List<string> physicalRoomIds);
+
+    /// <summary>
+    /// Saga compensation: reverts a CheckedIn reservation back to Confirmed
+    /// and stages a CheckInRevertedEvent so Billing can cancel the bill.
+    /// </summary>
+    Task<Result<bool>> HandleCheckInFailureAsync(Guid reservationId, string reason);
 
     // Read side: returns a flat DTO — never a domain object.
     Task<ReservationDto?> GetByIdAsync(Guid id);
