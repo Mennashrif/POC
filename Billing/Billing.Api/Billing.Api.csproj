@@ -20,4 +20,11 @@
     <ProjectReference Include="..\Billing.Infrastructure\Billing.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="uploads\" />
+    <None Update="Rules\malicious.yar">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
