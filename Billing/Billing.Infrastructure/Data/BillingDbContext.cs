@@ -13,6 +13,7 @@ public class BillingDbContext : DbContext
     public DbSet<Bill> Bills { get; set; }
     public DbSet<ProcessedEvent> ProcessedEvents { get; set; }
     public DbSet<BillingFile> BillingFiles { get; set; }
+    public DbSet<RolePermission> RolePermissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,5 +49,24 @@ public class BillingDbContext : DbContext
             entity.Property(f => f.UploadedAt).IsRequired();
             entity.Ignore(f => f.DomainEvents);
         });
+
+        modelBuilder.Entity<RolePermission>(entity =>
+        {
+            entity.HasKey(rp => rp.Id);
+            entity.Property(rp => rp.Role).IsRequired().HasMaxLength(100);
+            entity.Property(rp => rp.Permission).IsRequired().HasMaxLength(100);
+            entity.HasIndex(rp => new { rp.Role, rp.Permission }).IsUnique();
+            entity.Ignore(rp => rp.DomainEvents);
+        });
+
+        // Seed data
+        modelBuilder.Entity<RolePermission>().HasData(
+            new { Id = Guid.Parse("a1b2c3d4-0001-0001-0001-000000000001"), Role = "Admin", Permission = "read:bills" },
+            new { Id = Guid.Parse("a1b2c3d4-0001-0001-0001-000000000002"), Role = "Admin", Permission = "write:bills" },
+            new { Id = Guid.Parse("a1b2c3d4-0001-0001-0001-000000000003"), Role = "Admin", Permission = "upload:files" },
+            new { Id = Guid.Parse("a1b2c3d4-0001-0001-0001-000000000004"), Role = "Admin", Permission = "download:files" },
+            new { Id = Guid.Parse("a1b2c3d4-0001-0001-0001-000000000005"), Role = "User",  Permission = "read:bills" },
+            new { Id = Guid.Parse("a1b2c3d4-0001-0001-0001-000000000006"), Role = "User",  Permission = "download:files" }
+        );
     }
 }
