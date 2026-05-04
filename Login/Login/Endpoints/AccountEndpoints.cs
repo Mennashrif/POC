@@ -1,57 +1,45 @@
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+namespace Login.Endpoints;
 
-namespace Login.Endpoints
+public static class AccountEndpoints
 {
-    public static class AccountEndpoints
+    public static WebApplication MapAccountEndpoints(this WebApplication app)
     {
-        public static WebApplication MapAccountEndpoints(this WebApplication app)
+        app.MapPost("/api/account/login", async (LoginRequest request, IHttpClientFactory factory, IConfiguration config) =>
         {
-            app.MapPost("/api/account/login", (LoginRequest request, IConfiguration config) =>
+            var client = factory.CreateClient();
+
+            var keycloak = config.GetSection("Keycloak");
+            var tokenUrl = $"{keycloak["Authority"]}/protocol/openid-connect/token";
+
+            var form = new Dictionary<string, string>
             {
-                if (request.Username == "admin" && request.Password == "password")
-                {
-                    var token = GenerateJwtToken(request.Username, config);
-                    return Results.Ok(new LoginResponse(Token: token));
-                }
-                return Results.Unauthorized();
-            })
-            .WithName("Login");
-            return app;
-        }
-
-        private static string GenerateJwtToken(string username, IConfiguration config)
-        {
-            var jwtSettings = config.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"]!;
-            var issuer = jwtSettings["Issuer"]!;
-            var audience = jwtSettings["Audience"]!;
-            var expiryMinutes = int.Parse(jwtSettings["ExpiryMinutes"]!);
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.Role, "User"),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                ["grant_type"] = "password",
+                ["client_id"]  = keycloak["ClientId"]!,
+                ["username"]   = request.Username,
+                ["password"]   = request.Password
             };
 
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-                signingCredentials: credentials
-            );
+            var response = await client.PostAsync(tokenUrl, new FormUrlEncodedContent(form));
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+            if (!response.IsSuccessStatusCode)
+                return Results.Unauthorized();
+
+            var token = await response.Content.ReadFromJsonAsync<KeycloakTokenResponse>();
+
+            return Results.Ok(token);
+        })
+        .WithName("Login")
+        .AllowAnonymous();
+
+        return app;
     }
-
-    internal record LoginResponse(string Token);
-    internal record LoginRequest(string Username, string Password);
 }
+
+internal record LoginRequest(string Username, string Password);
+
+internal record KeycloakTokenResponse(
+    string Access_Token,
+    string Refresh_Token,
+    int Expires_In,
+    int Refresh_Expires_In
+);

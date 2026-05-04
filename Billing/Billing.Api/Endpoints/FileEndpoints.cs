@@ -25,6 +25,7 @@ public static class FileEndpoints
                 : Results.BadRequest(new { error = result.Error });
         })
         .DisableAntiforgery()
+        .RequireAuthorization("upload:files")
         .WithName("UploadFile");
 
         app.MapGet("/bills/files/download/{id:guid}", async (Guid id, IMediator mediator) =>
@@ -41,6 +42,7 @@ public static class FileEndpoints
                 result.Value.FileName,
                 enableRangeProcessing: true);
         })
+        .RequireAuthorization("download:files")
         .WithName("DownloadFile");
 
         return app;

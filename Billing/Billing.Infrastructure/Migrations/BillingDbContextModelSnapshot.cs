@@ -114,6 +114,68 @@ namespace Billing.Infrastructure.Migrations
 
                     b.ToTable("ProcessedEvents");
                 });
+
+            modelBuilder.Entity("Billing.Domain.Models.RolePermission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Permission")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Role", "Permission")
+                        .IsUnique();
+
+                    b.ToTable("RolePermissions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-0001-0001-0001-000000000001"),
+                            Permission = "read:bills",
+                            Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-0001-0001-0001-000000000002"),
+                            Permission = "write:bills",
+                            Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-0001-0001-0001-000000000003"),
+                            Permission = "upload:files",
+                            Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-0001-0001-0001-000000000004"),
+                            Permission = "download:files",
+                            Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-0001-0001-0001-000000000005"),
+                            Permission = "read:bills",
+                            Role = "User"
+                        },
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-0001-0001-0001-000000000006"),
+                            Permission = "download:files",
+                            Role = "User"
+                        });
+                });
 #pragma warning restore 612, 618
         }
     }
