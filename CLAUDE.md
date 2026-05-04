@@ -1,7 +1,8 @@
+If CLAUDE-WIP.md exists in the repo root, read it at the start of every session for current feature context.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
 eSAP (Smart Accommodation Platform) is a proof-of-concept distributed microservices system for hotel/accommodation management. It demonstrates enterprise patterns: CQRS, Outbox Pattern, event-driven messaging, real-time notifications, and API gateway.
