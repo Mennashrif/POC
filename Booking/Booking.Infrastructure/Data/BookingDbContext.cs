@@ -12,6 +12,7 @@ public class BookingDbContext : DbContext
     // This specifically registers the Reservation Aggregate Root so EF Core maps it!
     public DbSet<Reservation> Reservations { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<LocalRoom> LocalRooms { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,6 +21,8 @@ public class BookingDbContext : DbContext
         modelBuilder.Entity<Reservation>(entity =>
         {
             entity.HasKey(r => r.Id);
+            entity.Property(r => r.RowVersion)
+            .IsRowVersion();
 
             entity.OwnsOne(r => r.StayDate);
 
@@ -34,7 +37,22 @@ public class BookingDbContext : DbContext
                 .HasField("_assignedPhysicalRoomIds")
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-            entity.Ignore(r => r.DomainEvents);
+        });
+
+        modelBuilder.Entity<LocalRoom>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.RoomNumber).IsRequired().HasMaxLength(20);
+            entity.Property(r => r.Status).IsRequired().HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.EventType).IsRequired().HasMaxLength(200);
+            entity.Property(t => t.Payload).IsRequired();
+            entity.Property(t => t.OccurredAt).IsRequired();
+            entity.Property(t => t.PublishedAt).IsRequired(false);
         });
     }
 }

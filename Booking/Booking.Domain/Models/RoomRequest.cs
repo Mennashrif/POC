@@ -1,5 +1,5 @@
 namespace Booking.Domain.Models;
 
-public record RoomRequest(RoomTypeEnum RoomType, int Quantity = 1)
+public record RoomRequest(Guid RoomTypeId, int Quantity = 1)
 {
 }

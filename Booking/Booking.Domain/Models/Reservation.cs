@@ -17,9 +17,8 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
     
     private readonly List<string> _assignedPhysicalRoomIds = new();
     public IReadOnlyCollection<string> AssignedPhysicalRoomIds => _assignedPhysicalRoomIds.AsReadOnly();
-
-    private Reservation() : base(Guid.Empty) { } 
-
+    public byte[] RowVersion { get; set; }
+    public Reservation() : base(Guid.NewGuid()) { }
     public Reservation(GuestDetails guest, StayDate stayDate, IEnumerable<RoomRequest> roomRequests) : base(Guid.NewGuid())
     {
         Guest = guest ?? throw new ArgumentNullException(nameof(guest));
@@ -35,13 +34,6 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
 
         Status = ReservationStatus.Confirmed;
 
-        AddDomainEvent(new ReservationConfirmedEvent(
-            Id,
-            StayDate.CheckIn,
-            StayDate.CheckOut,
-            Guest.Name,
-            DateTime.UtcNow
-        ));
    }
 
    public void CheckIn(List<string> physicalRoomIds)
@@ -55,13 +47,6 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
         Status = ReservationStatus.CheckedIn;
         _assignedPhysicalRoomIds.AddRange(physicalRoomIds);
 
-        AddDomainEvent(new ReservationCheckedInEvent(
-            Id,
-            physicalRoomIds,
-            Guest.Name,
-            DateTime.UtcNow,
-            DateTime.UtcNow
-        ));
    }
 
    public void CheckOut()
@@ -72,11 +57,29 @@ public class Reservation : BaseEntity<Guid>, IAggregateRoot
         Status = ReservationStatus.CheckedOut;
    }
 
+   public void Update(GuestDetails guest, StayDate stayDate)
+   {
+        if (Status != ReservationStatus.Pending && Status != ReservationStatus.Confirmed)
+            throw new InvalidOperationException("Only Pending or Confirmed reservations can be updated.");
+
+        Guest = guest ?? throw new ArgumentNullException(nameof(guest));
+        StayDate = stayDate;
+   }
+
    public void Cancel()
    {
         if(Status != ReservationStatus.Pending && Status != ReservationStatus.Confirmed)
             throw new InvalidOperationException("Reservation is not in Pending or Confirmed state");
-            
+
         Status = ReservationStatus.Cancelled;
+   }
+
+   public void RevertCheckIn()
+   {
+        if (Status != ReservationStatus.CheckedIn)
+            throw new InvalidOperationException("Only a CheckedIn reservation can have its check-in reverted.");
+
+        Status = ReservationStatus.Confirmed;
+        _assignedPhysicalRoomIds.Clear();
    }
 }
