@@ -1,6 +1,7 @@
-If CLAUDE-WIP.md exists in the repo root, read it at the start of every session for current feature context.
-
 # CLAUDE.md
+
+# CLAUDE.WIP.md
+If CLAUDE-WIP.md exists in the repo root, read it at the start of every session for current feature context.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 ## Project Overview
