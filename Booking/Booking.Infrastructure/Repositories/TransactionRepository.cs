@@ -1,6 +1,7 @@
 ﻿using Booking.Application.Abstractions;
 using Booking.Domain.Models;
 using Booking.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,9 +29,13 @@ namespace Booking.Infrastructure.Repositories
             await _dbContext.Transactions.AddAsync(transaction);
         }
 
-        public async Task SaveChangesAsync()
+        public async Task<List<Transaction>> GetUnpublishedAsync()
         {
-            await _dbContext.SaveChangesAsync();
+            return await _dbContext.Transactions
+                .Where(t => t.PublishedAt == null)
+                .OrderBy(t => t.OccurredAt)
+                .ToListAsync();
         }
+
     }
 }

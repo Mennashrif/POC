@@ -12,6 +12,7 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(typeof(CreateBillCommandHandler).Assembly));
 
         services.AddScoped<IBillingService, BillingService>();
+        services.AddScoped<IFileService, FileService>();
 
         return services;
     }

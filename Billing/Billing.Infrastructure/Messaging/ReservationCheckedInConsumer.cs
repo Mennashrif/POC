@@ -13,14 +13,14 @@ namespace Billing.Infrastructure.Messaging;
 public class ReservationCheckedInConsumer : BackgroundService
 {
     private readonly RabbitMqOptions _options;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _scopeFactory;
     private IConnection? _connection;
     private IChannel? _channel;
 
-    public ReservationCheckedInConsumer(IOptions<RabbitMqOptions> options, IServiceProvider serviceProvider)
+    public ReservationCheckedInConsumer(IOptions<RabbitMqOptions> options, IServiceScopeFactory scopeFactory)
     {
         _options = options.Value;
-        _serviceProvider = serviceProvider;
+        _scopeFactory = scopeFactory;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,25 +37,41 @@ public class ReservationCheckedInConsumer : BackgroundService
         _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(_channel);
+
         consumer.ReceivedAsync += async (_, ea) =>
         {
             var body = Encoding.UTF8.GetString(ea.Body.ToArray());
-            var message = JsonSerializer.Deserialize<ReservationCheckedInMessage>(body, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var eventType = ea.RoutingKey;
+            var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-            if (message is not null)
-            {
-                using var scope = _serviceProvider.CreateScope();
-                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            using var scope = _scopeFactory.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-                await mediator.Send(new CreateBillCommand(
-                    message.ReservationId,
-                    message.GuestName,
-                    message.PhysicalRoomIds,
-                    message.CheckInDate
-                ), stoppingToken);
+            switch (eventType)
+            {
+                case "ReservationCheckedInEvent":
+                {
+                    var message = JsonSerializer.Deserialize<ReservationCheckedInMessage>(body, jsonOptions);
+                    if (message is not null)
+                        await mediator.Send(new CreateBillCommand(
+                            message.ReservationId,
+                            message.GuestName,
+                            message.PhysicalRoomIds,
+                            message.CheckInDate
+                        ), stoppingToken);
+                    break;
+                }
+
+                case "CheckInRevertedEvent":
+                {
+                    var message = JsonSerializer.Deserialize<CheckInRevertedMessage>(body, jsonOptions);
+                    if (message is not null)
+                        await mediator.Send(new CancelBillCommand(message.ReservationId), stoppingToken);
+                    break;
+                }
+
+                default:
+                    break;
             }
 
             await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
@@ -78,10 +94,16 @@ public class ReservationCheckedInConsumer : BackgroundService
     }
 }
 
-record ReservationCheckedInMessage(
+internal record ReservationCheckedInMessage(
     Guid ReservationId,
     List<string> PhysicalRoomIds,
     string GuestName,
     DateTime CheckInDate,
+    DateTime OccurredAt
+);
+
+internal record CheckInRevertedMessage(
+    Guid ReservationId,
+    string Reason,
     DateTime OccurredAt
 );

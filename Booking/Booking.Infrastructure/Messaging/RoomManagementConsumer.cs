@@ -1,0 +1,115 @@
+using Booking.Application.Commands;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System.Text;
+using System.Text.Json;
+
+namespace Booking.Infrastructure.Messaging
+{
+    public class RoomManagementConsumer : BackgroundService
+    {
+        private readonly RabbitMqOptions _options;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private IConnection? _connection;
+        private IChannel? _channel;
+
+        public RoomManagementConsumer(IOptions<RabbitMqOptions> options, IServiceScopeFactory scopeFactory)
+        {
+            _options = options.Value;
+            _scopeFactory = scopeFactory;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            var factory = new ConnectionFactory
+            {
+                HostName = _options.Host,
+                Port = _options.Port,
+                UserName = _options.Username,
+                Password = _options.Password
+            };
+
+            _connection = await factory.CreateConnectionAsync(stoppingToken);
+            _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+
+            var consumer = new AsyncEventingBasicConsumer(_channel);
+
+            consumer.ReceivedAsync += async (_, ea) =>
+            {
+                var body = Encoding.UTF8.GetString(ea.Body.ToArray());
+                var eventType = ea.RoutingKey;
+                var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                using var scope = _scopeFactory.CreateScope();
+                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+                switch (eventType)
+                {
+                    case "Room.RoomAddedEvent":
+                    {
+                        var message = JsonSerializer.Deserialize<RoomAddedMessage>(body, jsonOptions);
+                        if (message is not null)
+                            await mediator.Send(new UpsertLocalRoomCommand(
+                                message.RoomId,
+                                message.RoomNumber,
+                                message.RoomTypeId,
+                                "Available"
+                            ), stoppingToken);
+                        break;
+                    }
+                    case "Room.RoomUpdatedEvent":
+                    {
+                        var message = JsonSerializer.Deserialize<RoomUpdatedMessage>(body, jsonOptions);
+                        if (message is not null)
+                            await mediator.Send(new UpsertLocalRoomCommand(
+                                message.RoomId,
+                                message.RoomNumber,
+                                message.RoomTypeId,
+                                message.Status
+                            ), stoppingToken);
+                        break;
+                    }
+                    case "Room.CheckInFailedEvent":
+                    {
+                        var message = JsonSerializer.Deserialize<CheckInFailedMessage>(body, jsonOptions);
+                        if (message is not null)
+                            await mediator.Send(new HandleCheckInFailureCommand(
+                                message.ReservationId,
+                                message.PhysicalRoomNumbers,
+                                message.Reason,
+                                message.OccurredAt
+                            ), stoppingToken);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+
+                await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: stoppingToken);
+            };
+
+            await _channel.BasicConsumeAsync(
+                queue: _options.RoomEventsQueueName,
+                autoAck: false,
+                consumer: consumer,
+                cancellationToken: stoppingToken);
+
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            if (_channel is not null) await _channel.DisposeAsync();
+            if (_connection is not null) await _connection.DisposeAsync();
+            await base.StopAsync(cancellationToken);
+        }
+    }
+
+    internal record RoomAddedMessage(Guid RoomId, string RoomNumber, Guid RoomTypeId, DateTime OccurredAt);
+    internal record RoomUpdatedMessage(Guid RoomId, string RoomNumber, Guid RoomTypeId, string Status, DateTime OccurredAt);
+    internal record CheckInFailedMessage(Guid ReservationId, List<string> PhysicalRoomNumbers, string Reason, DateTime OccurredAt);
+}

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RabbitMQ Topology</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1e1e2e;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .canvas {
+      display: grid;
+      grid-template-columns: 200px 80px 200px 80px 200px 80px 200px;
+      grid-template-rows: repeat(9, 52px);
+      align-items: center;
+      justify-items: center;
+      gap: 0;
+      position: relative;
+    }
+
+    /* ── BOXES ── */
+    .box {
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.35;
+      width: 180px;
+      height: 46px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .box-label {
+      font-size: 9px;
+      font-weight: 400;
+      opacity: 0.75;
+      margin-top: 2px;
+    }
+
+    /* publisher */
+    .publisher {
+      background: #3b82f6;
+      color: #fff;
+      border: 2px solid #60a5fa;
+      box-shadow: 0 0 14px #3b82f640;
+    }
+
+    /* exchange */
+    .exchange {
+      background: #f59e0b;
+      color: #1e1e2e;
+      border: 2px solid #fbbf24;
+      box-shadow: 0 0 18px #f59e0b60;
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      font-size: 12px;
+    }
+
+    /* queue */
+    .queue {
+      background: #10b981;
+      color: #fff;
+      border: 2px solid #34d399;
+      box-shadow: 0 0 14px #10b98140;
+      border-radius: 6px;
+      font-size: 10.5px;
+      height: 42px;
+    }
+
+    /* consumer */
+    .consumer {
+      background: #8b5cf6;
+      color: #fff;
+      border: 2px solid #a78bfa;
+      box-shadow: 0 0 14px #8b5cf640;
+    }
+
+    .consumer.muted {
+      background: #44475a;
+      border-color: #6272a4;
+      box-shadow: none;
+      opacity: 0.6;
+    }
+
+    /* ── ARROWS (SVG overlay) ── */
+    .svg-layer {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    line, path {
+      stroke-linecap: round;
+    }
+
+    /* ── ROUTING KEY BADGES ── */
+    .rk {
+      position: absolute;
+      background: #282a36;
+      border: 1px solid #6272a4;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 9px;
+      color: #8be9fd;
+      white-space: nowrap;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* ── LEGEND ── */
+    .legend {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #282a36;
+      border: 1px solid #44475a;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #f8f8f2;
+      margin-bottom: 4px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: #cdd6f4;
+    }
+
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ── SECTION LABELS ── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #6272a4;
+      text-transform: uppercase;
+    }
+
+    /* grid placement helpers */
+    .col1 { grid-column: 1; }
+    .col2 { grid-column: 2; }
+    .col3 { grid-column: 3; }
+    .col4 { grid-column: 4; }
+    .col5 { grid-column: 5; }
+    .col6 { grid-column: 6; }
+    .col7 { grid-column: 7; }
+
+    .row1 { grid-row: 1; }
+    .row2 { grid-row: 2; }
+    .row3 { grid-row: 3; }
+    .row4 { grid-row: 4; }
+    .row5 { grid-row: 5; }
+    .row6 { grid-row: 6; }
+    .row7 { grid-row: 7; }
+    .row8 { grid-row: 8; }
+    .row9 { grid-row: 9; }
+
+    /* exchange spans 3 rows vertically */
+    .exchange-wrap {
+      grid-column: 3;
+      grid-row: 3 / 7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+<div class="canvas" id="canvas">
+
+  <!-- ── COLUMN LABELS ── -->
+  <div class="section-label col1 row1">Publishers</div>
+  <div class="section-label col3 row1">Exchange</div>
+  <div class="section-label col5 row1">Queues</div>
+  <div class="section-label col7 row1">Consumers</div>
+
+  <!-- ── PUBLISHERS ── -->
+  <div class="box publisher col1 row3" id="pub-booking">
+    📅 Booking
+    <span class="box-label">Service</span>
+  </div>
+
+  <div class="box publisher col1 row6" id="pub-room">
+    🏨 RoomManagement
+    <span class="box-label">Service</span>
+  </div>
+
+  <!-- ── EXCHANGE ── -->
+  <div class="exchange-wrap" id="exchange-wrap">
+    <div class="exchange box" id="exchange">
+      ⚡ booking
+      <span class="box-label">Topic Exchange</span>
+    </div>
+  </div>
+
+  <!-- ── QUEUES ── -->
+  <div class="box queue col5 row2" id="q1">
+    reservation.confirmed
+    <span class="box-label">RK: ReservationConfirmedEvent</span>
+  </div>
+
+  <div class="box queue col5 row4" id="q2">
+    roommanagement.reservation-events
+    <span class="box-label">RK: ReservationCheckedInEvent</span>
+  </div>
+
+  <div class="box queue col5 row6" id="q3">
+    billing.reservation-events
+    <span class="box-label">RK: ReservationCheckedInEvent · CheckInRevertedEvent</span>
+  </div>
+
+  <div class="box queue col5 row8" id="q4">
+    booking.room-events
+    <span class="box-label">RK: Room.*</span>
+  </div>
+
+  <!-- ── CONSUMERS ── -->
+  <div class="box consumer muted col7 row2" id="con1">
+    — Future —
+    <span class="box-label">nobody yet</span>
+  </div>
+
+  <div class="box consumer col7 row4" id="con2">
+    🏨 RoomManagement
+    <span class="box-label">Consumer</span>
+  </div>
+
+  <div class="box consumer col7 row6" id="con3">
+    💳 Billing
+    <span class="box-label">Consumer</span>
+  </div>
+
+  <div class="box consumer col7 row8" id="con4">
+    📅 Booking
+    <span class="box-label">Consumer</span>
+  </div>
+
+  <!-- ── SVG ARROWS ── -->
+  <svg class="svg-layer" id="svg-layer"></svg>
+
+</div>
+
+<!-- ── LEGEND ── -->
+<div class="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Publisher Service</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;border-radius:50%"></div> Topic Exchange</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Queue</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Consumer Service</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#44475a"></div> No consumer yet</div>
+</div>
+
+<script>
+  // Draw arrows dynamically based on actual element positions
+  const svg = document.getElementById('svg-layer');
+  const canvas = document.getElementById('canvas');
+
+  function getCenter(el) {
+    const cr = canvas.getBoundingClientRect();
+    const er = el.getBoundingClientRect();
+    return {
+      x: er.left - cr.left + er.width / 2,
+      y: er.top  - cr.top  + er.height / 2,
+      left:   er.left  - cr.left,
+      right:  er.left  - cr.left + er.width,
+      top:    er.top   - cr.top,
+      bottom: er.top   - cr.top  + er.height,
+    };
+  }
+
+  function arrow(x1, y1, x2, y2, color = '#6272a4', dashed = false) {
+    const headLen = 8;
+    const dx = x2 - x1, dy = y2 - y1;
+    const angle = Math.atan2(dy, dx);
+    const px2 = x2 - headLen * Math.cos(angle);
+    const py2 = y2 - headLen * Math.sin(angle);
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', px2); line.setAttribute('y2', py2);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', '2');
+    if (dashed) line.setAttribute('stroke-dasharray', '5,4');
+    svg.appendChild(line);
+
+    // arrowhead
+    const head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    const tip = { x: x2, y: y2 };
+    const b1  = { x: x2 - headLen * Math.cos(angle - 0.4), y: y2 - headLen * Math.sin(angle - 0.4) };
+    const b2  = { x: x2 - headLen * Math.cos(angle + 0.4), y: y2 - headLen * Math.sin(angle + 0.4) };
+    head.setAttribute('points', `${tip.x},${tip.y} ${b1.x},${b1.y} ${b2.x},${b2.y}`);
+    head.setAttribute('fill', color);
+    svg.appendChild(head);
+  }
+
+  function elbowArrow(x1, y1, x2, y2, midX, color = '#6272a4', dashed = false) {
+    // L-shaped: right from source → down/up → right to target
+    const headLen = 8;
+    const angle = Math.atan2(y2 - y1, x2 - midX);
+    const ex = x2 - headLen * Math.cos(angle);
+    const ey = y2 - headLen * Math.sin(angle);
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${x1},${y1} L${midX},${y1} L${midX},${y2} L${ex},${ey}`);
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('fill', 'none');
+    if (dashed) path.setAttribute('stroke-dasharray', '5,4');
+    svg.appendChild(path);
+
+    const head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    const b1 = { x: x2 - headLen * Math.cos(angle - 0.4), y: y2 - headLen * Math.sin(angle - 0.4) };
+    const b2 = { x: x2 - headLen * Math.cos(angle + 0.4), y: y2 - headLen * Math.sin(angle + 0.4) };
+    head.setAttribute('points', `${x2},${y2} ${b1.x},${b1.y} ${b2.x},${b2.y}`);
+    head.setAttribute('fill', color);
+    svg.appendChild(head);
+  }
+
+  function badge(x, y, text, color = '#8be9fd') {
+    const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+    fo.setAttribute('x', x - 70); fo.setAttribute('y', y - 10);
+    fo.setAttribute('width', 140); fo.setAttribute('height', 20);
+    fo.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml"
+      style="background:#282a36;border:1px solid #6272a4;border-radius:4px;
+             padding:1px 5px;font-size:8.5px;color:${color};
+             white-space:nowrap;text-align:center;font-family:monospace">
+      ${text}
+    </div>`;
+    svg.appendChild(fo);
+  }
+
+  window.addEventListener('load', () => {
+    const pubBooking = getCenter(document.getElementById('pub-booking'));
+    const pubRoom    = getCenter(document.getElementById('pub-room'));
+    const exc        = getCenter(document.getElementById('exchange'));
+    const q1         = getCenter(document.getElementById('q1'));
+    const q2         = getCenter(document.getElementById('q2'));
+    const q3         = getCenter(document.getElementById('q3'));
+    const q4         = getCenter(document.getElementById('q4'));
+    const con1       = getCenter(document.getElementById('con1'));
+    const con2       = getCenter(document.getElementById('con2'));
+    const con3       = getCenter(document.getElementById('con3'));
+    const con4       = getCenter(document.getElementById('con4'));
+
+    const BLUE   = '#60a5fa';
+    const GREEN  = '#34d399';
+    const ORANGE = '#fbbf24';
+    const PURPLE = '#a78bfa';
+    const GRAY   = '#6272a4';
+
+    // publisher → exchange
+    // Booking → exchange (elbow up a bit)
+    elbowArrow(pubBooking.right, pubBooking.y, exc.left, exc.y - 20,
+               pubBooking.right + (exc.left - pubBooking.right) * 0.4, BLUE);
+
+    // RoomManagement → exchange (elbow down)
+    elbowArrow(pubRoom.right, pubRoom.y, exc.left, exc.y + 20,
+               pubRoom.right + (exc.left - pubRoom.right) * 0.4, ORANGE);
+
+    // exchange → queues (right-side elbow arrows)
+    const midX = exc.right + (q1.left - exc.right) * 0.45;
+
+    elbowArrow(exc.right, exc.y - 30, q1.left, q1.y, midX, BLUE, true);
+    elbowArrow(exc.right, exc.y - 10, q2.left, q2.y, midX, BLUE);
+    elbowArrow(exc.right, exc.y + 10, q3.left, q3.y, midX, GREEN);
+    elbowArrow(exc.right, exc.y + 30, q4.left, q4.y, midX, ORANGE);
+
+    // queues → consumers
+    arrow(q1.right, q1.y, con1.left, con1.y, GRAY, true);
+    arrow(q2.right, q2.y, con2.left, con2.y, PURPLE);
+    arrow(q3.right, q3.y, con3.left, con3.y, PURPLE);
+    arrow(q4.right, q4.y, con4.left, con4.y, PURPLE);
+
+    // routing key badges on publisher → exchange lines
+    badge(pubBooking.right + 40, pubBooking.y - 14, 'ReservationConfirmedEvent', '#8be9fd');
+    badge(pubBooking.right + 40, pubBooking.y + 4,  'ReservationCheckedInEvent', '#8be9fd');
+    badge(pubBooking.right + 40, pubBooking.y + 20, 'CheckInRevertedEvent',      '#8be9fd');
+    badge(pubRoom.right + 40,    pubRoom.y,          'Room.*',                    '#ffb86c');
+  });
+</script>
+</body>
+</html>

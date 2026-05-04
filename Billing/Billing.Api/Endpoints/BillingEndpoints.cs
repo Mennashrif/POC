@@ -16,6 +16,7 @@ public static class BillingEndpoints
                 ? Results.Ok(dto)
                 : Results.NotFound(new { error = $"Bill {id} not found." });
         })
+        .RequireAuthorization("read:bills")
         .WithName("GetBillById");
 
         app.MapGet("/bills/reservation/{reservationId:guid}", async (Guid reservationId, IMediator mediator) =>
@@ -27,6 +28,7 @@ public static class BillingEndpoints
                 ? Results.Ok(dto)
                 : Results.NotFound(new { error = $"No bill found for reservation {reservationId}." });
         })
+        .RequireAuthorization("read:bills")
         .WithName("GetBillByReservationId");
 
         return app;

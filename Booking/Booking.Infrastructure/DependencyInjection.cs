@@ -1,5 +1,6 @@
 using Booking.Application.Abstractions;
 using Booking.Infrastructure.Data;
+using Booking.Infrastructure.Jobs;
 using Booking.Infrastructure.Messaging;
 using Booking.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,15 @@ public static class DependencyInjection
         services.AddDbContext<BookingDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("BookingDb")));
 
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IReservationRepository, ReservationRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
+        services.AddScoped<ILocalRoomRepository, LocalRoomRepository>();
         services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMQ"));
         services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();
+        services.AddHostedService<RoomManagementConsumer>();
 
+        services.AddScoped<OutboxProcessorJob>();
         return services;
     }
 }

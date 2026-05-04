@@ -16,7 +16,7 @@ public static class ReservationEndpoints
                 new GuestDetails(request.Guest.Name, request.Guest.Email, request.Guest.Phone),
                 request.CheckIn,
                 request.CheckOut,
-                request.RoomRequests.Select(r => new RoomRequest(r.RoomType, r.Quantity)).ToList()
+                request.RoomRequests.Select(r => new RoomRequest(r.RoomTypeId, r.Quantity)).ToList()
             );
 
             var result = await mediator.Send(command);
@@ -64,6 +64,7 @@ record CreateReservationRequest(
 
 record GuestRequest(string Name, string Email, string Phone);
 
-record RoomRequestDto(RoomTypeEnum RoomType, int Quantity = 1);
+record RoomRequestDto(Guid RoomTypeId, int Quantity = 1);
 
 record CheckInRequest(List<string> PhysicalRoomIds);
+
