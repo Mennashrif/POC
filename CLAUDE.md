@@ -1,9 +1,8 @@
 # CLAUDE.md
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# CLAUDE.WIP.md
 If CLAUDE-WIP.md exists in the repo root, read it at the start of every session for current feature context.
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 ## Project Overview
 
 eSAP (Smart Accommodation Platform) is a proof-of-concept distributed microservices system for hotel/accommodation management. It demonstrates enterprise patterns: CQRS, Outbox Pattern, event-driven messaging, real-time notifications, and API gateway.
@@ -24,7 +23,7 @@ eSAP (Smart Accommodation Platform) is a proof-of-concept distributed microservi
 | Login | 7138 | — |
 | Notification | 7248 | — |
 | Frontend (Vite dev) | 3000 | — |
-| Keycloak | 8180 | — |
+| Keycloak | 8080 | — |
 
 ## Build & Run Commands
 
@@ -49,7 +48,7 @@ npm run build    # production build
 - **SQL Server** — all services need DB connections defined in `appsettings.json`
 - **RabbitMQ** — used by Booking, RoomManagement, Billing
 - **Redis** — used by MyGateway (token refresh) and Billing (permission cache)
-- **Keycloak** — realm `esap` at `http://localhost:8180`
+- **Keycloak** — realm `esap` at `http://localhost:8080`
 - **Hangfire Dashboard** — `/hangfire` on each service that uses it
 
 ## Architecture
@@ -100,7 +99,7 @@ YARP reverse proxy handles:
 - Routing: `/rooms/*` and `/roomtypes/*` → 7062, `/bills/*` → 7201, `/reservations/*` → 7003
 
 ### Keycloak Authentication
-- Authority: `http://localhost:8180/realms/esap`
+- Authority: `http://localhost:8080/realms/esap`
 - JWT Bearer is validated at the Gateway; downstream services also validate (defense-in-depth).
 - Billing uses claim-based permission policies (`read:bills`, `write:bills`, `upload:files`, `download:files`) cached in Redis for 30 minutes.
 
