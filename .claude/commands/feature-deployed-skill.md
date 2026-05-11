@@ -1,6 +1,6 @@
 # /feature-deployed-skill
 
-**description:** Use after a feature has been deployed to production. Triggered by the CI/CD pipeline after a confirmed merge to development. Reads each service's feature-WIP.md, appends a summary to feature.md, then deletes feature-WIP.md.
+**description:** Use after a feature has been deployed to production. Triggered by the CI/CD pipeline after a confirmed merge to Development. Reads each service's feature-WIP.md, appends a summary to feature.md, then deletes feature-WIP.md.
 
 **allowed-tools:** `Bash(git status:*)`, `Bash(git diff:*)`, `Bash(git log:*)`, `Bash(git push:*)`, `Bash(cat:*)`, `Bash(rm:*)`, `Bash(echo:*)`, `Bash(find:*)`, `Write`, `Read`, `Edit`
 
@@ -8,7 +8,7 @@
 
 ## When to use
 
-- The CI/CD pipeline has confirmed a merge to the `development` branch.
+- The CI/CD pipeline has confirmed a merge to the `Development` branch.
 - One or more services have a `.features/feature-WIP.md` file.
 
 ---
@@ -88,7 +88,7 @@ docs: update feature.md and remove WIP for <feature name>
 Then push:
 
 ```bash
-git push origin development
+git push origin Development
 ```
 
 Never force-push.
