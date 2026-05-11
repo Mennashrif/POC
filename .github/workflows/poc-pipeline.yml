@@ -1,0 +1,9 @@
+name: POC Pipeline
+on: [push] # Trigger on every push
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # Gets your code
+      - name: Run a simple script
+        run: echo "The POC pipeline is running!"
