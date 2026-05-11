@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddDbContext<RoomManagementDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("RoomManagementDb")));
 
+        services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
+
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IRoomRepository, RoomRepository>();
         services.AddScoped<IRoomTypeRepository, RoomTypeRepository>();
