@@ -1,0 +1,37 @@
+name: Feature Deployed Hook
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - development
+
+jobs:
+  run-feature-deployed-skill:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run /feature-deployed-skill
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          claude -p "/feature-deployed-skill" --dangerously-skip-permissions
