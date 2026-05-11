@@ -21,17 +21,46 @@ jobs:
           ref: Development
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Run /feature-deployed-skill
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Copy WIP summaries into feature.md and clean up
         run: |
-          claude -p "/feature-deployed-skill" --dangerously-skip-permissions
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          CHANGED=0
+
+          for WIP in $(find . -path "*/.features/feature-WIP.md" -not -path "*/.git/*"); do
+            SERVICE_DIR=$(dirname "$WIP" | xargs dirname)
+            FEATURE_MD="$SERVICE_DIR/.features/feature.md"
+
+            echo "Processing $WIP"
+
+            # Extract the ## Summary section from feature-WIP.md
+            SUMMARY=$(awk '/^## Summary/{found=1} found{print}' "$WIP")
+
+            if [ -z "$SUMMARY" ]; then
+              echo "No ## Summary section found in $WIP, skipping."
+              continue
+            fi
+
+            # Append summary to feature.md (create if it doesn't exist)
+            if [ ! -f "$FEATURE_MD" ]; then
+              echo "# Feature History" > "$FEATURE_MD"
+              echo "" >> "$FEATURE_MD"
+            fi
+
+            echo "" >> "$FEATURE_MD"
+            echo "$SUMMARY" >> "$FEATURE_MD"
+
+            # Delete the WIP file
+            rm "$WIP"
+
+            CHANGED=1
+          done
+
+          if [ "$CHANGED" -eq 1 ]; then
+            git add -A
+            git commit -m "docs: update feature.md and remove WIP after merge"
+            git push origin Development
+          else
+            echo "No feature-WIP.md files found, nothing to do."
+          fi

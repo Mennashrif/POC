@@ -97,6 +97,28 @@ git diff Development...HEAD -- <ServiceName>/
 
 If `feature-WIP.md` already exists and is current (commits already recorded), skip the update.
 
+---
+
+## Step 2b — Write summary into feature-WIP.md
+
+After updating the Commits section, generate a concise summary of the entire feature for this service and append it as a `## Summary` section at the bottom of `feature-WIP.md`:
+
+```markdown
+## Summary
+**Feature:** <feature name>
+**Date:** <YYYY-MM-DD>
+
+<2-4 sentences covering: what was built, why, and any key architectural decisions>
+
+**Changes:**
+- <bullet: key change 1>
+- <bullet: key change 2>
+```
+
+This summary is what the pipeline will copy into `feature.md` after the PR merges — write it as if a future contributor is reading the permanent feature history of this service.
+
+If a `## Summary` section already exists in `feature-WIP.md`, update it rather than appending a duplicate.
+
 Commit any changes to feature-WIP files: `docs: update feature-WIP for <feature name>`.
 
 ---
