@@ -11,7 +11,7 @@
 ## When to use
 
 - The user says "create a PR", "open a PR", or `/create-pr`.
-- The branch has commits not yet on master/main and is ready for review.
+- The branch has commits not yet on `Development` and is ready for review.
 
 ---
 
@@ -46,7 +46,7 @@ Run `git status`.
 Run:
 
 ```bash
-git diff master...HEAD --name-only
+git diff Development...HEAD --name-only
 ```
 
 Group changed files by their top-level folder (e.g. `RoomManagement`, `FileManagement`). These are the affected services. Only consider folders that represent actual services (not `.github`, `.claude`, root-level files).
@@ -79,7 +79,7 @@ mkdir -p <ServiceName>/.features
 Then, for each affected service, read the commit log for files in that service:
 
 ```bash
-git log master..HEAD --oneline -- <ServiceName>/
+git log Development..HEAD --oneline -- <ServiceName>/
 ```
 
 Append each commit as an entry under `## Commits`:
@@ -92,7 +92,7 @@ Append each commit as an entry under `## Commits`:
 
 Pull the detail from:
 ```bash
-git diff master...HEAD -- <ServiceName>/
+git diff Development...HEAD -- <ServiceName>/
 ```
 
 If `feature-WIP.md` already exists and is current (commits already recorded), skip the update.
@@ -107,8 +107,8 @@ Run these checks:
 
 ```bash
 git status                        # confirm clean tree
-git log master..HEAD --oneline    # review commits going into the PR
-git diff master...HEAD            # review cumulative diff
+git log Development..HEAD --oneline    # review commits going into the PR
+git diff Development...HEAD            # review cumulative diff
 ```
 
 Then push:
@@ -150,7 +150,7 @@ Do not invent test-plan items; base them on the actual change.
 
 - Do not force-push.
 - Do not skip hooks (`--no-verify`).
-- Do not open a PR against master from master — abort if the branch is master/main.
+- Do not open a PR against Development from Development — abort if the branch is Development/main.
 - Do not invent test-plan items; base them on the actual change.
 - Never overwrite `feature-WIP.md` — always append to the Commits section.
 - `feature.md` is not updated by this skill. That happens at deploy time.
