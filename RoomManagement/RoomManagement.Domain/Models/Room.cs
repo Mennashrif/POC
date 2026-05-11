@@ -11,6 +11,13 @@ public class Room : BaseEntity<Guid>
 
     private Room() : base(Guid.NewGuid()) { }
 
+    public Room(Guid id, string roomNumber, Guid roomTypeId, RoomStatus roomStatus) : base(id)
+    {
+        RoomNumber = roomNumber;
+        RoomTypeId = roomTypeId;
+        RoomStatus = roomStatus;
+    }
+
     public Room(string roomNumber, Guid roomTypeId) : base(Guid.NewGuid())
     {
         RoomNumber = roomNumber;
